@@ -48,14 +48,14 @@ export async function POST(request: Request) {
     }
 }
     
-function generateText(arg0: { model: any; prompt: string; }): { text: any; } | PromiseLike<{ text: any; }> {
+function generateText({ model, prompt }: { model: string; prompt: string }): { text: string } {
     // Return mock questions as a JSON string
     return { text: '["Question 1"]' };
 }
 
-function google(arg0: string): any {
+function google(modelName: string): string {
     // Return a mock model identifier
-    return arg0;
+    return modelName;
 }
 
 function getRandomInterviewCover() {
