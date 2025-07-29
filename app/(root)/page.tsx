@@ -4,8 +4,20 @@ import React from 'react'
 import Image from 'next/image'
 import { dummyInterviews } from '../constants'
 import InterviewCard from '../components/InterviewCard'
+import { getCurrentUser, getInterviewsByUserId, getLatestInterview } from '@/lib/actions/auth.action'
 
-const page = () => {
+const page = async () => {
+  const user = await getCurrentUser()
+
+  const [userInterviews, latestInterview] = await Promise.all([
+    getInterviewsByUserId(user?.id || ''),
+    getLatestInterview({userId: user?.id || ''})
+  ]);
+
+
+  const hasPastInterviews = userInterviews?.length > 0;
+  const hasUpcomingInterviews = latestInterview?.length > 0;
+
   return (
     <>
        <section className="card-cta">
@@ -20,7 +32,7 @@ const page = () => {
               <Link href='/interview'>Start an Interview</Link>
             </Button>
 
-          
+
 
           </div>
           <Image src="/robot.png" alt="robo-dude" width={400} height={400} className='max-sm:hidden' />
@@ -31,9 +43,15 @@ const page = () => {
         <h2>Your Interview</h2>
 
         <div className='interview-section'> 
-        {dummyInterviews.map((interview) => (
-              <InterviewCard {...interview} key={interview.id} />
-            ))}
+          {
+            hasPastInterviews ? (
+              userInterviews?.map((interview) => (
+                <InterviewCard {...interview} key={interview.id} />
+              ))
+            ) : (
+              <p>You haven't taken any interview yet</p>
+            )
+          }
         </div>
         {/* <p>You haven't taken any interview yet</p> */}
 
@@ -41,10 +59,15 @@ const page = () => {
           <h2>Take an Interview</h2>
 
           <div className='interview-section'></div>
-            {dummyInterviews.map((interview) => (
-              <InterviewCard {...interview} key={interview.id} />
-
-            ))}
+          {
+            hasUpcomingInterviews ? (
+              latestInterview?.map((interview) => (
+                <InterviewCard {...interview} key={interview.id} />
+              ))
+            ) : (
+              <p>There are no new interview available</p>
+            )
+          }
         </section>
 
        </section>
@@ -52,4 +75,6 @@ const page = () => {
   )
 }
 
-export default page
+export default page 
+
+

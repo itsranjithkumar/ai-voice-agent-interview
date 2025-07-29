@@ -42,3 +42,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 https://devicon.dev/ - for tech icons
+
+
+
+deploy on vercel - https://ai-voice-agent-interview-txxh.vercel.app/sign-in
