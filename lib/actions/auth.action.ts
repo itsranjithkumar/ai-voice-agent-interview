@@ -145,6 +145,11 @@ export async function isAuthenticated() {
 }
     
 
+export async function createInterview(interview: Omit<Interview, 'id'>): Promise<string> {
+    const docRef = await db.collection('interviews').add(interview);
+    return docRef.id;
+}
+
 export async function getInterviewsByUserId(userId: string): Promise<Interview[] | null> {
     const interviews = await db.collection('interviews').where('userId', '==', userId).orderBy('createdAt', 'desc').get();
     

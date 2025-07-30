@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { cn } from '@/lib/utils';
 import { vapi } from '@/lib/vapi.sdk';
+import { interviewer } from '../constants';
 
 enum callStatus {
   INACTIVE = 'INACTIVE',
@@ -16,7 +17,7 @@ interface SavedMessage {
   role: 'user'| 'system' | 'assistant'
   content: string
 }
-const Agent = ({userName,userId,type}:AgentProps) => {
+export const Agent = ({userName, userId, type, role, level, techstack,interviewId,questions}: AgentProps) => {
   const router = useRouter();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [callStatusState, setCallStatusState] = React.useState<callStatus>(callStatus.INACTIVE);
@@ -57,21 +58,77 @@ const Agent = ({userName,userId,type}:AgentProps) => {
     }
   },[])
 
+  const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+    console.log('Generate feedback here.')
+   // TODO : CREATE A SERVER ACTION THAT GENERATE FEEDBACK
+    const { success, id} = {
+      success:true,
+      id: 'feedback-id'
+    }
+
+    if(success && id) {
+      router.push(`/interview/${interviewId}/feedback`)
+    } else {
+      console.log('Failed to generate feedback')
+      router.push('/');
+    }
+  }
+    
+  
+
   useEffect(() => {
-    if (callStatusState === callStatus.FINISHED)router.push('/');
-  },[messages, callStatusState, type, userId])
+    if (callStatusState === callStatus.FINISHED && userId) {
+      // Save interview to database when finished
+      const interviewData = {
+        userId: userId,
+        role: role || 'Unknown',
+        level: level || 'Unknown',
+        questions: messages.map((m) => m.content),
+        techstack: techstack || [],
+        createdAt: new Date().toISOString(),
+        type: type || 'interview',
+        finalized: true,
+      };
+      fetch('/api/interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(interviewData),
+      }).then(() => {
+        if (type === 'generate') {
+          router.push('/');
+        } else {
+          handleGenerateFeedback(messages);
+        }
+      });
+    }
+  }, [callStatusState, userId, role, level, techstack, type, messages]);
 
   const handleCall = () => {
      setCallStatusState(callStatus.CONNECTING);
     
-     vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,{
-      variableValues: {
-        username: userName,
-        userId: userId
+
+     if(type === 'generate') {
+       vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,{
+        variableValues: {
+          username: userName,
+          userId: userId
+        }
+      })
+      
+     } else {
+      let formattedQuestions = ''
+
+      if (questions) {
+        formattedQuestions = questions.map((question) => `Q: ${question}`).join('\n')
       }
-    })
-    
-  }
+      
+      vapi.start(interviewer, {
+        variableValues: {
+          questions: formattedQuestions
+        }
+      });
+    }
+}
   const handleDisconnect = () => {
     setCallStatusState(callStatus.FINISHED);
     vapi.stop();
@@ -136,4 +193,4 @@ const Agent = ({userName,userId,type}:AgentProps) => {
 }
 
 
-export default Agent
+export default Agent 

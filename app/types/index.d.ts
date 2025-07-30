@@ -14,6 +14,7 @@ interface Feedback {
 }
 
 interface Interview {
+  amount: any;
   id: string;
   role: string;
   level: string;
@@ -39,7 +40,7 @@ interface User {
 }
 
 interface InterviewCardProps {
-  interviewId?: string;
+  id?: string;
   userId?: string;
   role: string;
   type: string;
@@ -48,6 +49,12 @@ interface InterviewCardProps {
 }
 
 interface AgentProps {
+  userName: string;
+  userId?: string;
+  type: "generate" | "interview";
+  role?: string;
+  level?: string;
+  techstack?: string[];
   userName: string;
   userId?: string;
   interviewId?: string;
