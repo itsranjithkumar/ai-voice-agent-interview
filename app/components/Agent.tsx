@@ -61,17 +61,23 @@ export const Agent = ({userName, userId, type, role, level, techstack,interviewI
   const handleGenerateFeedback = async (messages: SavedMessage[]) => {
     console.log('Generate feedback here.')
    // TODO : CREATE A SERVER ACTION THAT GENERATE FEEDBACK
-    const { success, id} = {
-      success:true,
-      id: 'feedback-id'
-    }
+    const res = await fetch('/api/feedback', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    interviewId,
+    userId,
+    transcript: messages
+  }),
+});
+const { success, id } = await res.json();
 
-    if(success && id) {
-      router.push(`/interview/${interviewId}/feedback`)
-    } else {
-      console.log('Failed to generate feedback')
-      router.push('/');
-    }
+if(success && id) {
+  router.push(`/interview/${interviewId}/feedback`)
+} else {
+  console.log('Failed to generate feedback')
+  router.push('/');
+}
   }
     
   
@@ -194,3 +200,10 @@ export const Agent = ({userName, userId, type, role, level, techstack,interviewI
 
 
 export default Agent 
+
+
+
+function createFeedback(arg0: { interviewId: string | undefined; userId: string | undefined; transcript: SavedMessage[]; }): { success: any; id: any; } | PromiseLike<{ success: any; id: any; }> {
+  throw new Error('Function not implemented.');
+}
+
