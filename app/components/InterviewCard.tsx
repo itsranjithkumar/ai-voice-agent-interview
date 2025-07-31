@@ -1,88 +1,120 @@
-import React from 'react'
-import dayjs from 'dayjs'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-// import { getRandomInterviewCover } from '@/lib/utils';
-import DisplayTechIcons from './DisplayTechIcons';
-import { getFeedbackByInterviewId } from '@/lib/actions/general.action';
+import dayjs from "dayjs";
+import Link from "next/link";
+import Image from "next/image";
 
-const InterviewCard = async ({id, userId,role,type,techstack,createdAt}:InterviewCardProps) => {
-    // getFeedbackByInterviewId returns Feedback[] | null, so pick first element if exists
-    const feedbackArr = userId && id ? await getFeedbackByInterviewId({ interviewId: id, userId: userId }) : null;
-    const Feedback = feedbackArr && feedbackArr.length > 0 ? feedbackArr[0] : null;
-    const normalizeType = /mix/gi.test(type)? 'Mixed': type;
-    const formattedDate = dayjs(createdAt).format('MMM D, YYYY')
-    function getRandomInterviewCover(): string {
-        const covers = [
-            '/covers/adobe.png',
-            '/covers/amazon.png',
-            '/covers/facebook.png',
-            '/covers/hostinger.png',
-            '/covers/pinterest.png',
-            '/covers/quora.png',
-            '/covers/reddit.png',
-            '/covers/skype.png',
-            '/covers/spotify.png',
-            '/covers/telegram.png',
-            '/covers/tiktok.png',
-            '/covers/yahoo.png'
-        ];
-        const idx = Math.floor(Math.random() * covers.length);
-        return covers[idx];
-    }
+import { Button } from "@/components/ui/button";
+import DisplayTechIcons from "./DisplayTechIcons";
 
-  return (
-    <div className='card-border w-[360px] max-sm:w-full min-h-96'>
+import { cn, getRandomInterviewCover } from "@/lib/utils";
+import { getFeedbackByInterviewId } from "@/lib/actions/general.action";
 
-        <div className="card-interview">
-            <div>
-                <div className='absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg bg-light-600'>
-                    <p className='badge-text'>{normalizeType}</p>
-                </div>
-
-                <Image src={getRandomInterviewCover()} alt="cover" width={90} height={90} className='rounded-full object-fit size-[90px]'  />
-
-                <h3 className='mt-5 capitalize'>
-                     {role} Interview
-
-                </h3>
-
-                <div className='flex flex-row gap-5 mt-3'>
-                            <div className='flex flex-row gap-2'>
-                                <Image src='/calendar.svg' alt='calendar' width={22} height={22} />
-                                <p className='text-sm'>{formattedDate}</p>
-                            </div>
-
-                            <div className='flex flex-row gap-2 items-center'>
-                                <Image src='/star.svg' alt='start' width={22} height={22} />
-                                   <p>{Feedback?.totalScore || '---'}/100</p>
-                            </div>
-
-                </div>
-
-                <p className='line-clamp-2 mt-5'>
-                    {Feedback?.finalAssessment || "you haven't taken the interview yet. Taken it now to improve yoour skills."}
-
-                </p>
-            </div>
-            <div className='flex flex-row justify-between'>
-               <DisplayTechIcons techStack={techstack} />
-                <Button className='btn-primary'>
-                    <Link href={Feedback
-                        ? `/interview/${id}/feedback`
-                        : `/interview/${id}`
-                    }>
-                        {Feedback ? 'Check Feedback' : 'View Interview'}
-                    </Link>
-                    
-                </Button>
-
-            </div>
-        </div>
-
-    </div>
-  )
+interface InterviewCardProps {
+  userId: string;
+  interviewId: string;
+  role: string;
+  type: string;
+  techstack: string[];
+  createdAt: string;
 }
 
-export default InterviewCard
+const InterviewCard = async ({
+  userId,
+  interviewId,
+  role,
+  type,
+  techstack,
+  createdAt
+}: InterviewCardProps) => {
+  const feedbackData =
+    userId && interviewId
+      ? await getFeedbackByInterviewId({
+          interviewId,
+          userId,
+        })
+      : null;
+
+  const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
+
+  const badgeColor =
+    {
+      Behavioral: "bg-light-400",
+      Mixed: "bg-light-600",
+      Technical: "bg-light-800",
+    }[normalizedType] || "bg-light-600";
+
+  const formattedDate = dayjs(
+    feedbackData?.createdAt || createdAt || Date.now()
+  ).format("MMM D, YYYY");
+
+  return (
+    <div className="card-border w-[360px] max-sm:w-full min-h-96">
+      <div className="card-interview">
+        <div>
+          {/* Type Badge */}
+          <div
+            className={cn(
+              "absolute top-0 right-0 w-fit px-4 py-2 rounded-bl-lg",
+              badgeColor
+            )}
+          >
+            <p className="badge-text ">{normalizedType}</p>
+          </div>
+
+          {/* Cover Image */}
+          <Image
+            src={getRandomInterviewCover()}
+            alt="cover-image"
+            width={90}
+            height={90}
+            className="rounded-full object-fit size-[90px]"
+          />
+
+          {/* Interview Role */}
+          <h3 className="mt-5 capitalize">{role} Interview</h3>
+
+          {/* Date & Score */}
+          <div className="flex flex-row gap-5 mt-3">
+            <div className="flex flex-row gap-2">
+              <Image
+                src="/calendar.svg"
+                width={22}
+                height={22}
+                alt="calendar"
+              />
+              <p>{formattedDate}</p>
+            </div>
+
+            <div className="flex flex-row gap-2 items-center">
+              <Image src="/star.svg" width={22} height={22} alt="star" />
+              <p>{feedbackData?.totalScore || "---"}/100</p>
+            </div>
+          </div>
+
+          {/* Feedback or Placeholder Text */}
+          <p className="line-clamp-2 mt-5">
+            {feedbackData?.finalAssessment ||
+              "You haven't taken this interview yet. Take it now to improve your skills."}
+          </p>
+        </div>
+
+        <div className="flex flex-row justify-between">
+          <DisplayTechIcons techStack={techstack} />
+
+          <Button className="btn-primary">
+            <Link
+              href={
+                feedbackData
+                  ? `/interview/${interviewId}/feedback`
+                  : `/interview/${interviewId}`
+              }
+            >
+              {feedbackData ? "Check Feedback" : "View Interview"}
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default InterviewCard;

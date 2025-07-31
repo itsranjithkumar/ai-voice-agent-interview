@@ -9,7 +9,6 @@ import {
 } from "@/lib/actions/general.action";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/actions/auth.action";
-import { ReactElement, JSXElementConstructor, ReactNode, ReactPortal, Key } from "react";
 
 const Feedback = async ({ params }: RouteParams) => {
   const { id } = await params;
@@ -18,11 +17,10 @@ const Feedback = async ({ params }: RouteParams) => {
   const interview = await getInterviewById(id);
   if (!interview) redirect("/");
 
-  const feedbackArr = await getFeedbackByInterviewId({
+  const feedback = await getFeedbackByInterviewId({
     interviewId: id,
     userId: user?.id!,
   });
-  const feedback = feedbackArr && feedbackArr.length > 0 ? feedbackArr[0] : null;
 
   return (
     <section className="section-feedback">
@@ -66,7 +64,7 @@ const Feedback = async ({ params }: RouteParams) => {
       {/* Interview Breakdown */}
       <div className="flex flex-col gap-4">
         <h2>Breakdown of the Interview:</h2>
-        {feedback?.categoryScores?.map((category: { name: string; score: number; comment: string }, index: number) => (
+        {feedback?.categoryScores?.map((category, index) => (
           <div key={index}>
             <p className="font-bold">
               {index + 1}. {category.name} ({category.score}/100)
@@ -79,7 +77,7 @@ const Feedback = async ({ params }: RouteParams) => {
       <div className="flex flex-col gap-3">
         <h3>Strengths</h3>
         <ul>
-          {feedback?.strengths?.map((strength: string, index: number) => (
+          {feedback?.strengths?.map((strength, index) => (
             <li key={index}>{strength}</li>
           ))}
         </ul>
@@ -88,7 +86,7 @@ const Feedback = async ({ params }: RouteParams) => {
       <div className="flex flex-col gap-3">
         <h3>Areas for Improvement</h3>
         <ul>
-          {feedback?.areasForImprovement?.map((area: string, index: number) => (
+          {feedback?.areasForImprovement?.map((area, index) => (
             <li key={index}>{area}</li>
           ))}
         </ul>

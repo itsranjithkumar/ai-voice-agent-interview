@@ -1,174 +1,132 @@
 "use server";
-import { db } from "@/app/firebase/admin";
-import { auth as adminAuth } from "@/app/firebase/admin";
+
+import { auth, db } from "@/app/firebase/admin";
 import { cookies } from "next/headers";
 
-const ONE_WEEK = 60 * 60 * 24 * 7;
-export async function signUp(params: SignUpParams) {
-       const {uid, name, email, password} = params;
+// Session duration (1 week)
+const SESSION_DURATION = 60 * 60 * 24 * 7;
 
-       try {
-        const userDocRef = db.collection("users").doc(uid);
-        const userRecord = await userDocRef.get();
+// Set session cookie
+export async function setSessionCookie(idToken: string) {
+  const cookieStore = await cookies();
 
-        if (userRecord.exists) {
-            return {
-                success: false,
-                message: 'User already exists. Please login.'
-            };
-        }
+  // Create session cookie
+  const sessionCookie = await auth.createSessionCookie(idToken, {
+    expiresIn: SESSION_DURATION * 1000, // milliseconds
+  });
 
-        // Only store name and email, never password
-        await userDocRef.set({
-            name,
-            email
-        });
-
-        return {
-            success: true,
-            message: 'Account created successfully. Please sign in.'
-        };
-       } catch (e: any) {
-            // Log the full error for debugging
-            console.error('Error creating a user:', e?.message || e);
-
-            // Return more specific error messages if possible
-            if (e.code === 'auth/email-already-exists') {
-                return {
-                    success: false,
-                    message: 'Email already exists.'
-                };
-            }
-            if (e.code === 'permission-denied') {
-                return {
-                    success: false,
-                    message: 'Permission denied. Please contact support.'
-                };
-            }
-            if (typeof e.message === 'string') {
-                return {
-                    success: false,
-                    message: e.message
-                };
-            }
-            return {
-                success: false,
-                message: 'Something went wrong. Please try again.'
-            };
-       }
-
+  // Set cookie in the browser
+  cookieStore.set("session", sessionCookie, {
+    maxAge: SESSION_DURATION,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    sameSite: "lax",
+  });
 }
 
+export async function signUp(params: SignUpParams) {
+  const { uid, name, email } = params;
+
+  try {
+    // check if user exists in db
+    const userRecord = await db.collection("users").doc(uid).get();
+    if (userRecord.exists)
+      return {
+        success: false,
+        message: "User already exists. Please sign in.",
+      };
+
+    // save user to db
+    await db.collection("users").doc(uid).set({
+      name,
+      email,
+      // profileURL,
+      // resumeURL,
+    });
+
+    return {
+      success: true,
+      message: "Account created successfully. Please sign in.",
+    };
+  } catch (error: any) {
+    console.error("Error creating user:", error);
+
+    // Handle Firebase specific errors
+    if (error.code === "auth/email-already-exists") {
+      return {
+        success: false,
+        message: "This email is already in use",
+      };
+    }
+
+    return {
+      success: false,
+      message: "Failed to create account. Please try again.",
+    };
+  }
+}
 
 export async function signIn(params: SignInParams) {
-    const {email, idToken} = params;
+  const { email, idToken } = params;
 
-    try {
-        const userRecord = await adminAuth.getUserByEmail(email)
+  try {
+    const userRecord = await auth.getUserByEmail(email);
+    if (!userRecord)
+      return {
+        success: false,
+        message: "User does not exist. Create an account.",
+      };
 
-        if(!userRecord) {
-            return {
-                success: false,
-                message: 'User does not exist. Create an account first'
-            }
-        }
+    await setSessionCookie(idToken);
+  } catch (error: any) {
+    console.log("");
 
-        await setSessionCookie(idToken)
-
-        return {
-            success: true,
-            message: 'Login successful'
-        }
-
-    } catch (e)  {
-        console.error('Error signing in', e)
-        return {
-            success: false,
-            message: 'Failed to login in an account'
-        }
-    }
-    
+    return {
+      success: false,
+      message: "Failed to log into account. Please try again.",
+    };
+  }
 }
 
+// Sign out user by clearing the session cookie
+export async function signOut() {
+  const cookieStore = await cookies();
 
-export async function setSessionCookie(idToken: string) {
-    const cookieStore = await cookies();
-
-    const sessionCookie = await adminAuth.createSessionCookie(idToken,{
-        expiresIn: ONE_WEEK * 1000,
-    })
-
-    cookieStore.set('session', sessionCookie, {
-       maxAge: ONE_WEEK,
-       httpOnly: true,
-       secure: process.env.NODE_ENV === 'production',
-       sameSite: 'lax',
-       path: '/',
-    })
-}
-    
-export async function getCurrentUser() : Promise<User | null> {
-     const cookieStore = await cookies();
-
-
-     const sessionCookie = cookieStore.get('session')?.value;
-
-
-     if(!sessionCookie) return null;
-
-     try{
-        const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true)
-
-        const userRecord = await db.collection('users').doc(decodedClaims.uid).get()
-
-        if(!userRecord.exists) return null;
-
-        return {
-            ...userRecord.data(),
-            id: userRecord.id
-
-        } as User;
-
-     }catch (e){
-        console.log(e)
-        return null;
-     }
-
-
-
+  cookieStore.delete("session");
 }
 
+// Get current user from session cookie
+export async function getCurrentUser(): Promise<User | null> {
+  const cookieStore = await cookies();
 
+  const sessionCookie = cookieStore.get("session")?.value;
+  if (!sessionCookie) return null;
+
+  try {
+    const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+
+    // get user info from db
+    const userRecord = await db
+      .collection("users")
+      .doc(decodedClaims.uid)
+      .get();
+    if (!userRecord.exists) return null;
+
+    return {
+      ...userRecord.data(),
+      id: userRecord.id,
+    } as User;
+  } catch (error) {
+    console.log(error);
+
+    // Invalid or expired session
+    return null;
+  }
+}
+
+// Check if user is authenticated
 export async function isAuthenticated() {
-    const user = await getCurrentUser();
-    return !!user;
+  const user = await getCurrentUser();
+  return !!user;
 }
-    
-
-export async function createInterview(interview: Omit<Interview, 'id'>): Promise<string> {
-    const docRef = await db.collection('interviews').add(interview);
-    return docRef.id;
-}
-
-export async function getInterviewsByUserId(userId: string): Promise<Interview[] | null> {
-    const interviews = await db.collection('interviews').where('userId', '==', userId).orderBy('createdAt', 'desc').get();
-    
-        return interviews.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    })) as Interview[];
-}
-  
-export async function getLatestInterview(params: GetLatestInterviewsParams): Promise<Interview[] | null> {
-
-    const { userId, limit = 20 } = params;
-    const interviews = await db.collection('interviews').where('finalized', '==', true).where('userId', '==', userId).orderBy('createdAt', 'desc').limit(limit).get();
-    
-    if (interviews.empty) return [];
-    
-    return interviews.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-    })) as Interview[];
-}
-    

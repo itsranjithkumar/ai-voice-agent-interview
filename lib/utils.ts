@@ -2,8 +2,21 @@ import { mappings } from "@/app/constants";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+// Add your utility functions here
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function getRandomInterviewCover(): string {
+  const covers = [
+    "/covers/cover1.jpg",
+    "/covers/cover2.jpg",
+    "/covers/cover3.jpg",
+    // Add more cover image paths as needed
+  ];
+  const randomIndex = Math.floor(Math.random() * covers.length);
+  return covers[randomIndex];
 }
 
 const techIconBaseURL = "https://cdn.jsdelivr.net/gh/devicons/devicon/icons";
