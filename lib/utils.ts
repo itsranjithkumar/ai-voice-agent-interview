@@ -10,10 +10,18 @@ export function cn(...inputs: ClassValue[]) {
 
 export function getRandomInterviewCover(): string {
   const covers = [
-    "/covers/cover1.jpg",
-    "/covers/cover2.jpg",
-    "/covers/cover3.jpg",
-    // Add more cover image paths as needed
+    "/covers/adobe.png",
+    "/covers/amazon.png",
+    "/covers/facebook.png",
+    "/covers/hostinger.png",
+    "/covers/pinterest.png",
+    "/covers/quora.png",
+    "/covers/reddit.png",
+    "/covers/skype.png",
+    "/covers/spotify.png",
+    "/covers/telegram.png",
+    "/covers/tiktok.png",
+    "/covers/yahoo.png"
   ];
   const randomIndex = Math.floor(Math.random() * covers.length);
   return covers[randomIndex];
