@@ -5,8 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { vapi } from "@/lib/vapi.sdk";
-import { interviewer } from "@/app/constants";
+import Vapi from "@vapi-ai/web";
 import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
@@ -21,6 +20,17 @@ interface SavedMessage {
   content: string;
 }
 
+interface AgentProps {
+  userName: string;
+  userId: string;
+  interviewId?: string;
+  feedbackId?: string;
+  type: string;
+  questions?: string[];
+  vapiKey?: string;
+  assistantId?: string;
+}
+
 const Agent = ({
   userName,
   userId,
@@ -28,12 +38,25 @@ const Agent = ({
   feedbackId,
   type,
   questions,
+  vapiKey,
+  assistantId,
 }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages, setMessages] = useState<SavedMessage[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");
+
+  // Initialize Vapi SDK with user's key
+  const [vapi, setVapi] = useState<Vapi | null>(null);
+
+  useEffect(() => {
+    if (vapiKey) {
+      setVapi(new Vapi(vapiKey));
+    } else {
+      setVapi(null);
+    }
+  }, [vapiKey]);
 
   useEffect(() => {
     const onCallStart = () => {
@@ -65,6 +88,7 @@ const Agent = ({
       console.log("Error:", error);
     };
 
+    if (!vapi) return;
     vapi.on("call-start", onCallStart);
     vapi.on("call-end", onCallEnd);
     vapi.on("message", onMessage);
@@ -73,6 +97,7 @@ const Agent = ({
     vapi.on("error", onError);
 
     return () => {
+      if (!vapi) return;
       vapi.off("call-start", onCallStart);
       vapi.off("call-end", onCallEnd);
       vapi.off("message", onMessage);
@@ -80,7 +105,7 @@ const Agent = ({
       vapi.off("speech-end", onSpeechEnd);
       vapi.off("error", onError);
     };
-  }, []);
+  }, [vapi]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -115,10 +140,21 @@ const Agent = ({
   }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
 
   const handleCall = async () => {
+    if (!vapi) {
+      alert("Vapi is not initialized. Please ensure you have entered a valid Vapi key in your profile.");
+      return;
+    }
     setCallStatus(CallStatus.CONNECTING);
 
     if (type === "generate") {
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+      // Use assistantId from user profile
+      if (!assistantId || assistantId.trim().length === 0) {
+        alert("Assistant ID is not configured. Please add your Assistant ID in your profile.");
+        setCallStatus(CallStatus.INACTIVE);
+        return;
+      }
+      console.log("Calling vapi.start with assistantId:", assistantId);
+      await vapi.start(assistantId, {
         variableValues: {
           username: userName,
           userid: userId,
@@ -132,21 +168,56 @@ const Agent = ({
           .join("\n");
       }
 
-      await vapi.start(interviewer, {
-        variableValues: {
-          questions: formattedQuestions,
-        },
-      });
+      // Use assistantId from user profile
+      if (!assistantId || assistantId.trim().length === 0) {
+        alert("Assistant ID is not configured. Please add your Assistant ID in your profile.");
+        setCallStatus(CallStatus.INACTIVE);
+        return;
+      }
+      console.log("Calling vapi.start with assistantId:", assistantId, { questions: formattedQuestions });
+      try {
+        await vapi.start(assistantId, {
+          variableValues: {
+            questions: formattedQuestions,
+            username: userName,
+            userid: userId,
+          },
+        });
+      } catch (err: any) {
+        let errorMsg = "Unknown error";
+        if (err?.error && typeof err.error.json === "function") {
+          // Try to extract error message from Vapi response
+          err.error.json().then((data: any) => {
+            errorMsg = data?.message || JSON.stringify(data);
+            alert("Vapi Error: " + errorMsg);
+            console.error("Vapi call error:", errorMsg, err);
+          });
+        } else {
+          alert("Vapi Error: " + (err?.message || JSON.stringify(err)));
+          console.error("Vapi call error:", err);
+        }
+        throw err;
+      }
     }
   };
 
   const handleDisconnect = () => {
     setCallStatus(CallStatus.FINISHED);
-    vapi.stop();
+    if (vapi) {
+      vapi.stop();
+    }
   };
 
+  if (!vapiKey) {
+    return (
+      <div className="p-4 bg-yellow-200 text-yellow-900 rounded">
+        <strong>Vapi key is missing.</strong> Please add your Vapi key in your profile to use AI agent features.
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="agent-container">
       <div className="call-view">
         {/* AI Interviewer Card */}
         <div className="card-interviewer">
@@ -203,11 +274,10 @@ const Agent = ({
                 callStatus !== "CONNECTING" && "hidden"
               )}
             />
-
             <span className="relative">
               {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                ? "Call"
-                : ". . ."}
+                ? "Start"
+                : "Connecting..."}
             </span>
           </button>
         ) : (
@@ -216,7 +286,7 @@ const Agent = ({
           </button>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

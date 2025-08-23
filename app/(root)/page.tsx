@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import InterviewCard from "@/app/components/InterviewCard";
+import Profile from "@/app/components/Profile";
 
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import {
@@ -23,6 +24,8 @@ async function Home() {
 
   return (
     <>
+      {/* Profile section */}
+      <Profile email={user?.email || ""} initialVapiKey={user?.vapiKey || ""} initialAssistantId={user?.assistantId || ""} />
       <section className="card-cta">
         <div className="flex flex-col gap-6 max-w-lg">
           <h2>Get Interview-Ready with AI-Powered Practice & Feedback</h2>
