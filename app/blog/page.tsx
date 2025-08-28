@@ -1,216 +1,376 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+"use client"
+
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, ExternalLink, Key, Bot, Shield, CheckCircle } from "lucide-react"
+import { ChevronRight, Cpu, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import { motion, useScroll, useTransform } from "framer-motion"
+import { useState, useEffect, useRef } from "react"
 
 export default function BlogPage() {
+  const [scrollY, setScrollY] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  })
+  
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95])
+  
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY)
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const fadeInUp = {
+    initial: { opacity: 0, y: 30 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }
+  }
+
+  const staggerContainer = {
+    animate: {
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.1
+      }
+    }
+  }
+
+  const steps = [
+    {
+      number: "1",
+      title: "Create a Vapi Account",
+      description: "Sign up on Vapi.ai to access the dashboard and voice-AI features.",
+      substeps: [
+        { label: "a.", text: "Go to vapi.ai and click Sign Up", link: "https://vapi.ai" },
+        { label: "b.", text: "Complete registration with your email or social login" },
+        { label: "c.", text: "Verify your email address to activate the account" }
+      ],
+      tip: "Use a work email for easy team onboarding later.",
+      code: ""
+    },
+    {
+      number: "2",
+      title: "Generate Your Vapi Web Token",
+      description: "Create a secure Web Token that links your Vapi account to our application.",
+      substeps: [
+        { label: "a.", text: "From the dashboard, open Settings → API Keys / Web Token" },
+        { label: "b.", text: "Click Generate Token" },
+        { label: "c.", text: "Copy the newly-created token e.g. sk-1234abcd5678efgh" },
+        { label: "d.", text: "Head to the Profile page in this app and paste it into the “Vapi Web Token” field" }
+      ],
+      tip: "Keep this token secret—treat it like a password.",
+      code: ""
+    },
+    {
+      number: "3",
+      title: "Create an Assistant (Workflow)",
+      description: "Design and configure the voice assistant you want to use.",
+      substeps: [
+        { label: "a.", text: "In the dashboard, go to Workflows / Assistants" },
+        { label: "b.", text: "Click Create Workflow and set voice, model, etc." },
+        { label: "c.", text: "Save the workflow once you're happy with it" }
+      ],
+      tip: "Experiment in the playground to fine-tune personality before going live.",
+      code: ""
+    },
+    {
+      number: "4",
+      title: "Get the Assistance ID",
+      description: "Copy the unique ID of the workflow you just created.",
+      substeps: [
+        { label: "a.", text: "Open the workflow details page" },
+        { label: "b.", text: "Copy the Workflow ID e.g. asst-xyz987654321" },
+        { label: "c.", text: "Paste it into the “Assistance ID” field on your Profile page" }
+      ],
+      tip: "Double-check that you didn’t copy extra spaces.",
+      code: ""
+    },
+    {
+      number: "5",
+      title: "Start Using Your Assistant",
+      description: "With both the Web Token and Assistance ID saved in your profile, you’re ready to go!",
+      substeps: [
+        { label: "a.", text: "Navigate to the Interview page" },
+        { label: "b.", text: "Hit Start Interview to begin a voice chat powered by your assistant" }
+      ],
+      tip: "Create multiple workflows if you need different assistants for separate use-cases.",
+      code: `import Vapi from '@vapi-ai/web'
+
+const vapi = new Vapi({
+  token: userProfile.token,
+  assistantId: userProfile.assistantId
+})
+
+vapi.start()`
+    }
+  ]
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Vapi Integration Guide</h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Learn how to set up your Vapi AI integration with step-by-step instructions and best practices.
+    <div className="min-h-screen bg-white dark:bg-black" ref={containerRef}>
+      {/* Apple-style gradient background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-black dark:to-gray-950" />
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.15), transparent)`,
+            transform: `translateY(${scrollY * 0.3}px)`
+          }}
+        />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Hero Header - Apple Style */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
+          className="text-center pt-20 pb-16"
+          style={{ opacity, scale }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-900 mb-8"
+          >
+            <Cpu className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 tracking-wide uppercase">
+              Developer Guide
+            </span>
+          </motion.div>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-5xl sm:text-6xl lg:text-7xl font-semibold mb-6 text-gray-900 dark:text-white tracking-tight"
+            style={{
+              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+            }}
+          >
+            Vapi Integration.
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+              Simplified.
+            </span>
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed"
+          >
+            Add powerful voice AI capabilities to your application in minutes. 
+            A comprehensive guide to integrating Vapi's voice assistant technology.
+          </motion.p>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="flex flex-wrap gap-6 justify-center text-sm text-gray-500 dark:text-gray-500"
+          >
+            <span>December 2024</span>
+            <span>•</span>
+            <span>10 min read</span>
+            <span>•</span>
+            <span>AI Integration</span>
+          </motion.div>
+        </motion.div>
+
+        {/* Introduction Section */}
+        <motion.section 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto mb-20"
+        >
+          <h2 className="text-3xl font-semibold text-gray-900 dark:text-white mb-6">
+            Why Vapi?
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-8">
+            Vapi revolutionizes how developers integrate voice AI into their applications. 
+            With its powerful SDK and intuitive dashboard, you can create sophisticated voice 
+            assistants that understand context, handle complex conversations, and deliver 
+            exceptional user experiences.
           </p>
-        </div>
+          
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              { icon: "🎯", title: "Easy Integration", desc: "Simple SDK with clear documentation" },
+              { icon: "⚡", title: "Real-time Voice", desc: "Ultra-low latency conversations" },
+              { icon: "🔒", title: "Enterprise Ready", desc: "Secure and scalable infrastructure" }
+            ].map((feature, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800"
+              >
+                <div className="text-3xl mb-3">{feature.icon}</div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {feature.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
 
-        {/* Main Article */}
-        <article className="max-w-4xl mx-auto">
-          <Card className="border-border shadow-sm mb-8">
-            <CardHeader className="pb-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                <Calendar className="h-4 w-4" />
-                <span>Updated December 2024</span>
-                <span>•</span>
-                <Clock className="h-4 w-4" />
-                <span>5 min read</span>
-              </div>
-              <CardTitle className="text-3xl mb-4">🔑 How to Create Your Vapi Key and Get Your Assistant ID</CardTitle>
-              <CardDescription className="text-lg">
-                If you're building an AI Voice or Chat application using <strong>Vapi</strong>, you'll need two
-                important credentials: your Web Token and Assistant ID. This guide walks you through the complete setup
-                process.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="prose prose-lg max-w-none">
-              <div className="space-y-8">
-                {/* Step 1 */}
-                <div className="border-l-4 border-primary pl-6">
-                  <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <span className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                      1
-                    </span>
-                    Create a Vapi Account
-                  </h2>
-                  <div className="space-y-3 text-muted-foreground">
-                    <p>
-                      1. Go to{" "}
-                      <a
-                        href="https://vapi.ai"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline inline-flex items-center gap-1"
-                      >
-                        vapi.ai <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </p>
-                    <p>2. Sign up with your email (or use Google/GitHub login)</p>
-                    <p>3. Verify your email to activate your account</p>
+        {/* Steps Section */}
+        <motion.section 
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto mb-20"
+        >
+          <motion.h2 
+            variants={fadeInUp}
+            className="text-3xl font-semibold text-gray-900 dark:text-white mb-12 text-center"
+          >
+            Integration Steps
+          </motion.h2>
+
+          {steps.map((step, index) => (
+            <motion.div 
+              key={index}
+              variants={fadeInUp}
+              className="mb-12"
+            >
+              <div className="group">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black font-semibold">
+                    {step.number}
                   </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {step.title}
+                  </h3>
                 </div>
-
-                {/* Step 2 */}
-                <div className="border-l-4 border-secondary pl-6">
-                  <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <span className="bg-secondary text-secondary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                      2
-                    </span>
-                    Generate a Vapi Web Token
-                  </h2>
-                  <div className="space-y-3 text-muted-foreground">
-                    <p>
-                      1. After logging into the dashboard, navigate to <strong>Settings</strong> →{" "}
-                      <strong>API Keys</strong> (or Web Tokens)
-                    </p>
-                    <p>
-                      2. Click <strong>Generate Token</strong>
-                    </p>
-                    <p>3. Copy the token and keep it safe</p>
-                    <div className="bg-muted p-4 rounded-lg mt-4">
-                      <p className="text-sm font-medium text-foreground mb-2">👉 Example:</p>
-                      <code className="text-sm bg-background px-2 py-1 rounded border">
-                        NEXT_PUBLIC_VAPI_WEB_TOKEN=your_generated_token_here
-                      </code>
+                
+                <div className="ml-14 space-y-4">
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {step.description}
+                  </p>
+                  
+                  {step.substeps && (
+                    <div className="rounded-2xl bg-gray-50 dark:bg-gray-900/50 p-6 border border-gray-200 dark:border-gray-800">
+                      <div className="space-y-3 text-sm">
+                        {step.substeps.map((substep, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <span className="text-gray-400 dark:text-gray-600">{substep.label}</span>
+                            <span className="text-gray-700 dark:text-gray-300">
+                              {substep.link ? (
+                                <>
+                                  {substep.text.split('vapi.ai')[0]}
+                                  <Link 
+                                    href={substep.link} 
+                                    className="text-blue-600 dark:text-blue-400 hover:underline" 
+                                    target="_blank"
+                                  >
+                                    vapi.ai
+                                  </Link>
+                                  {substep.text.split('vapi.ai')[1]}
+                                </>
+                              ) : (
+                                substep.text
+                              )}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Step 3 */}
-                <div className="border-l-4 border-accent pl-6">
-                  <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <span className="bg-accent text-accent-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                      3
-                    </span>
-                    Create a New Assistant (Workflow)
-                  </h2>
-                  <div className="space-y-3 text-muted-foreground">
-                    <p>
-                      1. From the Vapi dashboard, go to <strong>Workflows</strong> or <strong>Assistants</strong> tab
-                    </p>
-                    <p>
-                      2. Click <strong>Create New Workflow</strong>
-                    </p>
-                    <p>3. Configure your assistant:</p>
-                    <ul className="list-disc list-inside ml-4 space-y-1">
-                      <li>Add a name and description</li>
-                      <li>Connect it with any LLM or API you want</li>
-                      <li>Save your changes</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Step 4 */}
-                <div className="border-l-4 border-primary pl-6">
-                  <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <span className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                      4
-                    </span>
-                    Get Your Assistant ID
-                  </h2>
-                  <div className="space-y-3 text-muted-foreground">
-                    <p>1. Open the workflow you just created</p>
-                    <p>
-                      2. In the workflow settings or details page, you'll find a unique <strong>ID</strong> (called{" "}
-                      <strong>Workflow ID</strong> or <strong>Assistant ID</strong>)
-                    </p>
-                    <p>3. Copy this value</p>
-                    <div className="bg-muted p-4 rounded-lg mt-4">
-                      <p className="text-sm font-medium text-foreground mb-2">👉 Example:</p>
-                      <code className="text-sm bg-background px-2 py-1 rounded border">
-                        NEXT_PUBLIC_VAPI_WORKFLOW_ID=your_workflow_id_here
-                      </code>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 5 */}
-                <div className="border-l-4 border-secondary pl-6">
-                  <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <span className="bg-secondary text-secondary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                      5
-                    </span>
-                    Add Them to Your Project
-                  </h2>
-                  <div className="space-y-3 text-muted-foreground">
-                    <p>
-                      For <strong>React / Next.js / Vite projects</strong>, add the following inside your{" "}
-                      <code>.env</code> file:
-                    </p>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <pre className="text-sm bg-background p-3 rounded border overflow-x-auto">
-                        {`NEXT_PUBLIC_VAPI_WEB_TOKEN=your_generated_token_here
-NEXT_PUBLIC_VAPI_WORKFLOW_ID=your_workflow_id_here`}
+                  )}
+                  
+                  {step.code && (
+                    <div className="rounded-2xl bg-gray-900 dark:bg-black p-6 border border-gray-800 dark:border-gray-700">
+                      <pre className="text-sm text-gray-300 overflow-x-auto">
+                        <code>{step.code}</code>
                       </pre>
                     </div>
-                    <p>Then restart your development server. 🚀</p>
+                  )}
+                  
+                  <div className="flex items-start gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="mt-0.5">💡</span>
+                    <p>
+                      <span className="font-medium">Pro tip:</span> {step.tip}
+                    </p>
                   </div>
                 </div>
-
-                {/* Final Notes */}
-                <div className="bg-muted/50 p-6 rounded-lg">
-                  <h2 className="text-2xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                    🎯 Final Notes
-                  </h2>
-                  <ul className="space-y-2 text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <Shield className="h-4 w-4 mt-1 text-primary flex-shrink-0" />
-                      Your <strong>Web Token</strong> is like a password — don't share it publicly
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Bot className="h-4 w-4 mt-1 text-secondary flex-shrink-0" />
-                      You can create multiple workflows if you want different assistants
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Key className="h-4 w-4 mt-1 text-accent flex-shrink-0" />
-                      If your wallet runs out of credits, you'll need to purchase credits or create a new account
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Success Message */}
-                <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 p-6 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-800 dark:text-green-200 mb-2">
-                    <CheckCircle className="h-5 w-5" />
-                    <h3 className="font-semibold">You're All Set!</h3>
-                  </div>
-                  <p className="text-green-700 dark:text-green-300">
-                    Now you know how to generate your <strong>Vapi Web Token</strong> and get your{" "}
-                    <strong>Assistant ID</strong> to integrate into your applications.
-                  </p>
-                </div>
               </div>
-            </CardContent>
-          </Card>
+            </motion.div>
+          ))}
+        </motion.section>
 
-          {/* Call to Action */}
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <h3 className="text-xl font-semibold text-foreground">Ready to Configure Your Settings?</h3>
-                <p className="text-muted-foreground">
-                  Head back to your profile to securely save your Vapi credentials.
-                </p>
-                <Link href="/">
-                  <Button size="lg" className="font-medium">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Go to Profile Settings
-                  </Button>
-                </Link>
+        {/* Success Message */}
+        <motion.section 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto mb-20"
+        >
+          <div className="rounded-3xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-12 border border-green-200 dark:border-green-800">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
               </div>
-            </CardContent>
-          </Card>
-        </article>
+            </div>
+            <h2 className="text-2xl font-semibold text-center text-gray-900 dark:text-white mb-4">
+              You're All Set!
+            </h2>
+            <p className="text-center text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Your Vapi integration is complete. Start building amazing voice experiences 
+              that will delight your users and set your application apart.
+            </p>
+          </div>
+        </motion.section>
+
+        {/* Call to Action */}
+        <motion.section 
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="text-center pb-20"
+        >
+          <h2 className="text-3xl font-semibold text-gray-900 dark:text-white mb-6">
+            Ready to Begin?
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
+            Start your AI interview journey today and experience the power of voice-enabled interactions.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/interview">
+              <Button 
+                size="lg" 
+                className="bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white px-8 py-6 text-base rounded-full transition-all duration-200 transform hover:scale-105"
+              >
+                Start Interview
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/profile">
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="border-gray-300 dark:border-gray-700 px-8 py-6 text-base rounded-full transition-all duration-200 transform hover:scale-105"
+              >
+                Configure Profile
+              </Button>
+            </Link>
+          </div>
+        </motion.section>
       </div>
     </div>
   )
