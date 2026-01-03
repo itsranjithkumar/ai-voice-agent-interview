@@ -46,3 +46,8 @@ https://devicon.dev/ - for tech icons
 
 
 deploy on vercel - https://ai-voice-agent-interview-txxh.vercel.app/sign-in
+
+
+
+
+temp email - https://internxt.com/temporary-email
