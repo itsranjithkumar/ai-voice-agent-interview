@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import Vapi from "@vapi-ai/web";
+import { vapi, assistantId } from "@/lib/vapi.sdk";
 import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
@@ -27,8 +27,6 @@ interface AgentProps {
   feedbackId?: string;
   type: string;
   questions?: string[];
-  vapiKey?: string;
-  assistantId?: string;
 }
 
 const Agent = ({
@@ -38,8 +36,6 @@ const Agent = ({
   feedbackId,
   type,
   questions,
-  vapiKey,
-  assistantId,
 }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -47,16 +43,7 @@ const Agent = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");
 
-  // Initialize Vapi SDK with user's key
-  const [vapi, setVapi] = useState<Vapi | null>(null);
-
-  useEffect(() => {
-    if (vapiKey) {
-      setVapi(new Vapi(vapiKey));
-    } else {
-      setVapi(null);
-    }
-  }, [vapiKey]);
+  // Vapi SDK is already initialized in vapi.sdk.ts
 
   useEffect(() => {
     const onCallStart = () => {
@@ -141,15 +128,14 @@ const Agent = ({
 
   const handleCall = async () => {
     if (!vapi) {
-      alert("Vapi is not initialized. Please ensure you have entered a valid Vapi key in your profile.");
+      alert("Vapi is not properly configured. Please contact support.");
       return;
     }
     setCallStatus(CallStatus.CONNECTING);
 
     if (type === "generate") {
-      // Use assistantId from user profile
-      if (!assistantId || assistantId.trim().length === 0) {
-        alert("Assistant ID is not configured. Please add your Assistant ID in your profile.");
+      if (!assistantId) {
+        alert("Assistant ID is not configured. Please check your environment variables.");
         setCallStatus(CallStatus.INACTIVE);
         return;
       }
@@ -208,13 +194,6 @@ const Agent = ({
     }
   };
 
-  if (!vapiKey) {
-    return (
-      <div className="p-4 bg-yellow-200 text-yellow-900 rounded">
-        <strong>Vapi key is missing.</strong> Please add your Vapi key in your profile to use AI agent features.
-      </div>
-    );
-  }
 
   return (
     <div className="agent-container">

@@ -12,27 +12,23 @@ import Link from "next/link"
 
 interface SecureProfileProps {
   email: string
-  initialVapiKey?: string
   initialAssistantId?: string
 }
 
-export default function SecureProfile({ email, initialVapiKey, initialAssistantId }: SecureProfileProps) {
-  const [vapiKey, setVapiKey] = useState(initialVapiKey || "")
+export default function SecureProfile({ email, initialAssistantId }: SecureProfileProps) {
   const [assistantId, setAssistantId] = useState(initialAssistantId || "")
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-  const [showVapiKey, setShowVapiKey] = useState(false)
   const [showAssistantId, setShowAssistantId] = useState(false)
 
-  // Validation functions
-  const isVapiKeyValid = vapiKey.length >= 10
+  // Validation function
   const isAssistantIdValid = assistantId.length >= 5
-  const isFormValid = isVapiKeyValid && isAssistantIdValid
+  const isFormValid = isAssistantIdValid
 
   const handleSave = async () => {
     if (!isFormValid) {
-      setError("Please provide valid Vapi Key and Assistant ID")
+      setError("Please provide a valid Assistant ID")
       return
     }
 
@@ -41,20 +37,20 @@ export default function SecureProfile({ email, initialVapiKey, initialAssistantI
     setError("")
 
     try {
-      const res = await fetch("/api/profile/vapi-key", {
+      const res = await fetch("/api/profile/assistant-id", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vapiKey, assistantId }),
+        body: JSON.stringify({ assistantId }),
       })
 
       const data = await res.json()
 
       if (res.ok && data.success) {
-        setMessage("Configuration saved securely!")
+        setMessage("Assistant ID saved successfully!")
         setError("")
       } else {
         setMessage("")
-        setError(data.error || "Failed to save configuration. Please try again.")
+        setError(data.error || "Failed to save Assistant ID. Please try again.")
       }
     } catch (err) {
       setError("Network error. Please check your connection and try again.")
@@ -101,104 +97,93 @@ export default function SecureProfile({ email, initialVapiKey, initialAssistantI
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <Bot className="h-5 w-5" />
-              AI Integration
+              AI Assistant Configuration
             </CardTitle>
             <CardDescription>
-              Configure your Vapi AI settings. Your credentials are encrypted and stored securely.
+              Configure your AI assistant for interviews
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <Label htmlFor="vapiKey" className="flex items-center gap-2">
-                <Key className="h-4 w-4" />
-                Vapi Web Token
-                {isVapiKeyValid && <CheckCircle className="h-4 w-4 text-green-600" />}
-              </Label>
-              <div className="relative">
-                <Input
-                  id="vapiKey"
-                  type={showVapiKey ? "text" : "password"}
-                  value={vapiKey}
-                  onChange={(e) => setVapiKey(e.target.value)}
-                  placeholder="Enter your Vapi Web Token"
-                  className={cn(
-                    "pr-12",
-                    !isVapiKeyValid && vapiKey && "border-destructive focus-visible:ring-destructive",
-                  )}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1 h-8 w-8"
-                  onClick={() => setShowVapiKey(!showVapiKey)}
-                >
-                  {showVapiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="assistant-id" className="flex items-center gap-2">
+                  <Bot className="h-4 w-4" />
+                  Assistant ID
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => setShowAssistantId(!showAssistantId)}
+                  >
+                    {showAssistantId ? (
+                      <EyeOff className="h-3.5 w-3.5 mr-1" />
+                    ) : (
+                      <Eye className="h-3.5 w-3.5 mr-1" />
+                    )}
+                    {showAssistantId ? 'Hide' : 'Show'}
+                  </Button>
+                </div>
               </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="assistantId" className="flex items-center gap-2">
-                <Bot className="h-4 w-4" />
-                Assistant ID
-                {isAssistantIdValid && <CheckCircle className="h-4 w-4 text-green-600" />}
-              </Label>
-              <div className="relative">
-                <Input
-                  id="assistantId"
-                  type={showAssistantId ? "text" : "password"}
-                  value={assistantId}
-                  onChange={(e) => setAssistantId(e.target.value)}
-                  placeholder="Enter your Assistant ID"
-                  className={cn(
-                    "pr-12",
-                    !isAssistantIdValid && assistantId && "border-destructive focus-visible:ring-destructive",
-                  )}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1 h-8 w-8"
-                  onClick={() => setShowAssistantId(!showAssistantId)}
-                >
-                  {showAssistantId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-
-            <Button onClick={handleSave} disabled={saving || !isFormValid} className="w-full" size="lg">
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Shield className="h-4 w-4 mr-2" />
-                  Save Configuration
-                </>
+              <Input
+                id="assistant-id"
+                type={showAssistantId ? 'text' : 'password'}
+                value={assistantId}
+                onChange={(e) => setAssistantId(e.target.value)}
+                placeholder="asst_..."
+                className={cn("font-mono", !assistantId || isAssistantIdValid ? '' : 'border-red-500')}
+              />
+              {!isAssistantIdValid && assistantId && (
+                <p className="text-sm text-red-500">Assistant ID must be at least 5 characters long</p>
               )}
-            </Button>
+              <p className="text-xs text-muted-foreground">
+                Create an assistant in the{' '}
+                <a
+                  href="https://app.vapi.ai/assistants"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Vapi dashboard
+                </a>{' '}
+                and paste its ID here
+              </p>
+            </div>
+
+            {error && (
+              <Alert variant="destructive" className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <AlertDescription className="text-sm">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {message && (
+              <Alert className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0 text-green-500" />
+                <AlertDescription className="text-sm text-green-700 dark:text-green-400">
+                  {message}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={!isFormValid || saving}
+                className="w-full sm:w-auto"
+              >
+                {saving ? 'Saving...' : 'Save Assistant ID'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {message && (
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        )}
-
-        {(!vapiKey || !assistantId) && (
+        {(!assistantId) && (
           <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
@@ -208,7 +193,7 @@ export default function SecureProfile({ email, initialVapiKey, initialAssistantI
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-amber-700 dark:text-amber-300">
-                To enable AI features, please configure your Vapi credentials:
+                To enable AI features, please configure your AI assistant:
               </p>
               <ol className="list-decimal list-inside space-y-2 text-sm text-amber-700 dark:text-amber-300">
                 <li>

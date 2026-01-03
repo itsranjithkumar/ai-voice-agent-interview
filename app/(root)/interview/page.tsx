@@ -12,8 +12,6 @@ const Page = async () => {
         userName={user?.name!}
         userId={user?.id || ""}
         type="generate"
-        vapiKey={user?.vapiKey || ""}
-        assistantId={user?.assistantId || ""}
       />
     </>
   );

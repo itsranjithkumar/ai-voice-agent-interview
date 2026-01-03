@@ -37,7 +37,6 @@ interface User {
   name: string;
   email: string;
   id: string;
-  vapiKey?: string;
   assistantId?: string;
 }
 
